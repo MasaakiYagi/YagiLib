@@ -1,0 +1,325 @@
+{
+  "Uuid": "5edf65b9-667d-4afc-a209-15133aad49c4",
+  "IsCustomNode": true,
+  "Category": "My General Use",
+  "Description": "スイープを作成",
+  "Name": "CreateSweepByCurveProfile",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "//[line1,line2,line3]",
+      "Id": "1cd70898e6de49c8988d9291fb4caa15",
+      "Inputs": [],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "DesignScript のコードを直接作成することができます。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "パス",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "1bc1673d8ec643579cd2f485e53b9116",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "8570316dba354b1ca7e639748c02a5fd",
+          "Name": "",
+          "Description": "記号",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "関数パラメータ: カスタムノードで使用。\r\n\r\nパラメータのタイプと既定値を指定できます。例:\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "プロファイル閉曲線",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "081dacc1a7ed4c24968ea742b75dae3c",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "336ab2234f5f42a59ddb56e1e082d5c4",
+          "Name": "",
+          "Description": "記号",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "関数パラメータ: カスタムノードで使用。\r\n\r\nパラメータのタイプと既定値を指定できます。例:\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "パス描画平面の法線",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "df46de3ae8fe41c1a2ff66977f7ebde7",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "4d20ed5cd2d64fdca7c9c43fe43c0477",
+          "Name": "",
+          "Description": "記号",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "関数パラメータ: カスタムノードで使用。\r\n\r\nパラメータのタイプと既定値を指定できます。例:\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "//[0,0,1][0,1,0][1,0,0]のいずれか",
+      "Id": "35b405a739234303949e797752734d2d",
+      "Inputs": [],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "DesignScript のコードを直接作成することができます。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "押出し",
+      "Id": "2ce681feb9a94df59adceb95821f434e",
+      "Inputs": [
+        {
+          "Id": "d846691e5cc344cea854616be98e074b",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "関数の出力、カスタム ノードで使用"
+    },
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "\r\nimport clr\r\n\r\nclr.AddReference('RevitAPI')\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import *\r\n\r\nclr.AddReference('RevitAPIUI')\r\nfrom Autodesk.Revit.UI import *\r\n\r\nclr.AddReference('System')\r\nfrom System.Collections.Generic import List\r\n\r\nclr.AddReference('RevitNodes')\r\nimport Revit\r\nclr.ImportExtensions(Revit.GeometryConversion)\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\nclr.AddReference('RevitServices')\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuidoc=DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument\r\n\r\n#Preparing input from dynamo to revit\r\nlines = UnwrapElement(IN[0])\r\nprofile = UnwrapElement(IN[1])\r\ndirection = UnwrapElement(IN[2])\r\n\r\n#pathCurveをrefに\r\na = lambda x:x.ToRevitType()\r\npathCurveArray = CurveArray()\r\npathClosedCurve = map(a,lines)\r\nfor i in pathClosedCurve:#閉曲線内の辺の数だけループ\r\n\tpathCurveArray.Append(i)\r\n\r\n#プロファイルのcurveArrArray格納\r\nprofCurveArrArray = CurveArrArray()\r\nprofCurveArray = CurveArray()\r\nprofClosedCurve = map(a,profile[0])\r\nfor i in profClosedCurve:#閉曲線内の辺の数だけループ\r\n\tprofCurveArray.Append(i)\r\nprofCurveArrArray.Append(profCurveArray)\r\n\r\n#Do some action in a Transaction\r\nsolid = []\r\nTransactionManager.Instance.EnsureInTransaction(doc)\r\n\r\n#スケッチ平面\r\npl = Plane.CreateByNormalAndOrigin(XYZ(direction[0],direction[1],direction[2]), XYZ(direction[0]*lines[0].StartPoint.X/304.8,direction[1]*lines[0].StartPoint.Y/304.8,direction[2]*lines[0].StartPoint.Z/304.8))\r\nsketchPlane = SketchPlane.Create(doc,pl)\r\n\r\n\r\n#プロファイル\r\nsweepProf = doc.Application.Create.NewCurveLoopsProfile(profCurveArrArray)\r\n\r\nsweep = doc.FamilyCreate.NewSweep(True, pathCurveArray, sketchPlane,sweepProf, 0, ProfilePlaneLocation.Start)\r\nsolid.append(sweep)\r\n\"\"\"\r\nfor (bottom,top) in zip(bottoms,tops):\r\n\t#pl = Plane.CreateByNormalAndOrigin(vector, XYZ(0,0,bottom/304.8))\r\n\tpl = Plane.CreateByNormalAndOrigin(vector, vector*bottom/304.8)\r\n\tsketchPlane = SketchPlane.Create(doc,pl)\r\n\tsolid1 = doc.FamilyCreate.NewExtrusion(True, curveArrArray, sketchPlane, top/304.8)\r\n\tsolid.append(solid1)\r\n\t\"\"\"\r\nTransactionManager.Instance.TransactionTaskDone()\r\n\r\n\r\nOUT = solid",
+      "VariableInputPorts": true,
+      "Id": "c2d675fb873c4c9e8fd7b4f4b92eb3a2",
+      "Inputs": [
+        {
+          "Id": "941d3a1149e04a76b864a061ee934244",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "d49fd7b19ae44f919717f379b3bf150e",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "268fdca9f9fe4a4b8e866a2eb7577d54",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "3297fc05c95d438496828719f1fbac9d",
+          "Name": "OUT",
+          "Description": "Python スクリプトの結果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "埋め込み IronPython スクリプトを実行します。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "//[[line1,line2,line3],[・・・],[・・・],[・・・]]",
+      "Id": "ff6eebcea7384014a36e8dc7b7eec8f1",
+      "Inputs": [],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "DesignScript のコードを直接作成することができます。"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "8570316dba354b1ca7e639748c02a5fd",
+      "End": "941d3a1149e04a76b864a061ee934244",
+      "Id": "7ae2c0af59eb47d5ac883166f3b0ff6f"
+    },
+    {
+      "Start": "336ab2234f5f42a59ddb56e1e082d5c4",
+      "End": "d49fd7b19ae44f919717f379b3bf150e",
+      "Id": "f71d6de3aaa249d9ad53b158b42f3183"
+    },
+    {
+      "Start": "4d20ed5cd2d64fdca7c9c43fe43c0477",
+      "End": "268fdca9f9fe4a4b8e866a2eb7577d54",
+      "Id": "b177dbfb6e1d4d629e66a2a3fa1b88e3"
+    },
+    {
+      "Start": "3297fc05c95d438496828719f1fbac9d",
+      "End": "d846691e5cc344cea854616be98e074b",
+      "Id": "5848369c9a7d4fb7afc283a40aebcedf"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.5.0.7460",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "背景プレビュー",
+      "EyeX": 1657.8556319290224,
+      "EyeY": 2171.0244591375795,
+      "EyeZ": 2089.4075051202758,
+      "LookX": -1878.9649301255511,
+      "LookY": -1126.3269307019059,
+      "LookZ": -3718.0040261080439,
+      "UpX": -0.02164020602172714,
+      "UpY": 0.998848386484952,
+      "UpZ": -0.042820582664740085
+    },
+    "NodeViews": [
+      {
+        "ShowGeometry": true,
+        "Name": "Code Block",
+        "Id": "1cd70898e6de49c8988d9291fb4caa15",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 366.6579631254599,
+        "Y": 321.86342279666655
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "パス",
+        "Id": "1bc1673d8ec643579cd2f485e53b9116",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 601.5,
+        "Y": 324.17971323575762
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "プロファイル",
+        "Id": "081dacc1a7ed4c24968ea742b75dae3c",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 591.80512500787836,
+        "Y": 445.6740698221227
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "方向",
+        "Id": "df46de3ae8fe41c1a2ff66977f7ebde7",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 601.5,
+        "Y": 574.75
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Code Block",
+        "Id": "35b405a739234303949e797752734d2d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 312.0,
+        "Y": 577.0
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Output",
+        "Id": "2ce681feb9a94df59adceb95821f434e",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1193.0,
+        "Y": 410.75
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "CreateSweepByCurveProfile.py",
+        "Id": "c2d675fb873c4c9e8fd7b4f4b92eb3a2",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 929.76630294710321,
+        "Y": 384.26305531181026
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Code Block",
+        "Id": "ff6eebcea7384014a36e8dc7b7eec8f1",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 228.75130912846998,
+        "Y": 445.10530875030662
+      }
+    ],
+    "Annotations": [],
+    "X": -161.110963858782,
+    "Y": 133.70884149233092,
+    "Zoom": 0.4932755586728742
+  }
+}

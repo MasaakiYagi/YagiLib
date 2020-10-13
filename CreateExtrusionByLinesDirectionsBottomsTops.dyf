@@ -1,0 +1,395 @@
+{
+  "Uuid": "736f605d-dfa2-4874-a784-19cefe3d330c",
+  "IsCustomNode": true,
+  "Category": "My General Use",
+  "Description": "閉曲線ごとに配列格納されたLine、押出方向、下部配列、上部配列の入力で効率的に押出を作成",
+  "Name": "CreateExtrusionByLinesDirectionsBottomsTops",
+  "ElementResolver": {
+    "ResolutionMap": {}
+  },
+  "Inputs": [],
+  "Outputs": [],
+  "Nodes": [
+    {
+      "ConcreteType": "PythonNodeModels.PythonNode, PythonNodeModels",
+      "NodeType": "PythonScriptNode",
+      "Code": "\r\nimport clr\r\n\r\nclr.AddReference('RevitAPI')\r\nfrom Autodesk.Revit.DB import *\r\nfrom Autodesk.Revit.DB.Structure import *\r\n\r\nclr.AddReference('RevitAPIUI')\r\nfrom Autodesk.Revit.UI import *\r\n\r\nclr.AddReference('System')\r\nfrom System.Collections.Generic import List\r\n\r\nclr.AddReference('RevitNodes')\r\nimport Revit\r\nclr.ImportExtensions(Revit.GeometryConversion)\r\nclr.ImportExtensions(Revit.Elements)\r\n\r\nclr.AddReference('RevitServices')\r\nimport RevitServices\r\nfrom RevitServices.Persistence import DocumentManager\r\nfrom RevitServices.Transactions import TransactionManager\r\n\r\ndoc = DocumentManager.Instance.CurrentDBDocument\r\nuidoc=DocumentManager.Instance.CurrentUIApplication.ActiveUIDocument\r\n\r\n#Preparing input from dynamo to revit\r\nlines = UnwrapElement(IN[0])\r\nbottoms = UnwrapElement(IN[1])\r\ntops = UnwrapElement(IN[2])\r\ndirection = UnwrapElement(IN[3])\r\n\r\n#Translate Dynamo.Geometry.Line to CurveArrArray\r\na = lambda x:x.ToRevitType()\r\ncurveArrArray = CurveArrArray()\r\nfor i in lines:#閉曲線の数だけループ\r\n\tcurveArray = CurveArray()\r\n\tclosedCurve = map(a,i)\r\n\tfor j in closedCurve:#閉曲線内の辺の数だけループ\r\n\t\tcurveArray.Append(j)\r\n\tcurveArrArray.Append(curveArray)\r\n\r\n#Do some action in a Transaction\r\nsolid = []\r\nTransactionManager.Instance.EnsureInTransaction(doc)\r\n\r\nvector = XYZ(direction[0],direction[1],direction[2])\r\nfor (bottom,top) in zip(bottoms,tops):\r\n\t#pl = Plane.CreateByNormalAndOrigin(vector, XYZ(0,0,bottom/304.8))\r\n\t#pl = Plane.CreateByNormalAndOrigin(vector, vector*bottom/304.8)\r\n\t#押出作成\r\n\tpl = Plane.CreateByNormalAndOrigin(vector, XYZ(0,0,0))\r\n\tsketchPlane = SketchPlane.Create(doc,pl)\r\n\tsolid1 = doc.FamilyCreate.NewExtrusion(True, curveArrArray, sketchPlane, top/304.8)\r\n\t#押出移動\r\n\ttransPoint = vector*bottom/304.8\r\n\tElementTransformUtils.MoveElement(doc, solid1.Id, transPoint)\r\n\tsolid.append(solid1)\r\n\t\r\nTransactionManager.Instance.TransactionTaskDone()\r\n\r\n\r\nOUT = solid",
+      "VariableInputPorts": true,
+      "Id": "ef44a556f6ed410782016d97b1897142",
+      "Inputs": [
+        {
+          "Id": "1a0f18ce0a90406ebc034ab845c608d9",
+          "Name": "IN[0]",
+          "Description": "Input #0",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "d4eaa7b8d3604021a554e31fde2b6b29",
+          "Name": "IN[1]",
+          "Description": "Input #1",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "f8d6703cf00c42ffbcef7f013b6d6a5d",
+          "Name": "IN[2]",
+          "Description": "Input #2",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        },
+        {
+          "Id": "822bcd9567ee4cdaa0895df3e3bcbbe7",
+          "Name": "IN[3]",
+          "Description": "Input #3",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [
+        {
+          "Id": "de3250df56b8440da20ad98440d61ddb",
+          "Name": "OUT",
+          "Description": "Python スクリプトの結果",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "埋め込み IronPython スクリプトを実行します。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "閉曲線配列",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "4df923df13c74351acdfd5370707a007",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "2242b4927e9c4a008a446ed1507a8944",
+          "Name": "",
+          "Description": "記号",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "関数パラメータ: カスタムノードで使用。\r\n\r\nパラメータのタイプと既定値を指定できます。例:\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "下部高さ配列",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "527028704a5f4ba8bd3e2de6020f5866",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "448146ec1a014ba2b25da4b635c7ac74",
+          "Name": "",
+          "Description": "記号",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "関数パラメータ: カスタムノードで使用。\r\n\r\nパラメータのタイプと既定値を指定できます。例:\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "高さ配列",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "6e8856cf39c64675862c98f34f75d72d",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "28f81adcdb474fc786508ac1ba84441c",
+          "Name": "",
+          "Description": "記号",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "関数パラメータ: カスタムノードで使用。\r\n\r\nパラメータのタイプと既定値を指定できます。例:\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Symbol, DynamoCore",
+      "NodeType": "InputNode",
+      "Parameter": {
+        "Name": "押出方向",
+        "TypeName": "var",
+        "TypeRank": -1,
+        "DefaultValue": null,
+        "Description": ""
+      },
+      "Id": "aa413dc3f30c45669e29ca04bd23cc6b",
+      "Inputs": [],
+      "Outputs": [
+        {
+          "Id": "1aeca5a4ba3b442596c15eb528251d6f",
+          "Name": "",
+          "Description": "記号",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Replication": "Disabled",
+      "Description": "関数パラメータ: カスタムノードで使用。\r\n\r\nパラメータのタイプと既定値を指定できます。例:\r\n\r\ninput : var[]..[]\r\nvalue : bool = false"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CustomNodes.Output, DynamoCore",
+      "NodeType": "OutputNode",
+      "ElementResolver": null,
+      "Symbol": "押出し",
+      "Id": "3ab5199518ae40ce8d43f9353d74ebc8",
+      "Inputs": [
+        {
+          "Id": "9a4b4d76040142d0aff1a48a095431d7",
+          "Name": "",
+          "Description": "",
+          "UsingDefaultValue": false,
+          "Level": 2,
+          "UseLevels": false,
+          "KeepListStructure": false
+        }
+      ],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "関数の出力、カスタム ノードで使用"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "//[[line1,line2,line3],[・・・],[・・・],[・・・]]",
+      "Id": "f159f93ba70c4d6dbadbec73f8332113",
+      "Inputs": [],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "DesignScript のコードを直接作成することができます。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "//[0,100,200,300]",
+      "Id": "239a693c8297473097b01586caf564dd",
+      "Inputs": [],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "DesignScript のコードを直接作成することができます。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "//[20,20,20,20]\n//bottomsと配列数同じ",
+      "Id": "16edeaec63544fc8a6ead2d92c50232a",
+      "Inputs": [],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "DesignScript のコードを直接作成することができます。"
+    },
+    {
+      "ConcreteType": "Dynamo.Graph.Nodes.CodeBlockNodeModel, DynamoCore",
+      "NodeType": "CodeBlockNode",
+      "Code": "//[0,0,1][0,1,0][1,0,0]のいずれか",
+      "Id": "f198730932b04078b4e71b6608451d81",
+      "Inputs": [],
+      "Outputs": [],
+      "Replication": "Disabled",
+      "Description": "DesignScript のコードを直接作成することができます。"
+    }
+  ],
+  "Connectors": [
+    {
+      "Start": "de3250df56b8440da20ad98440d61ddb",
+      "End": "9a4b4d76040142d0aff1a48a095431d7",
+      "Id": "6a9e1c748ca3410fbe263e20d7d962b9"
+    },
+    {
+      "Start": "2242b4927e9c4a008a446ed1507a8944",
+      "End": "1a0f18ce0a90406ebc034ab845c608d9",
+      "Id": "8d178531e741477799509fddfe971d39"
+    },
+    {
+      "Start": "448146ec1a014ba2b25da4b635c7ac74",
+      "End": "d4eaa7b8d3604021a554e31fde2b6b29",
+      "Id": "b531d4d60e604d62a1dd9b51d4464e38"
+    },
+    {
+      "Start": "28f81adcdb474fc786508ac1ba84441c",
+      "End": "f8d6703cf00c42ffbcef7f013b6d6a5d",
+      "Id": "997918f5f6ab40acbd59f5f90443390b"
+    },
+    {
+      "Start": "1aeca5a4ba3b442596c15eb528251d6f",
+      "End": "822bcd9567ee4cdaa0895df3e3bcbbe7",
+      "Id": "4c0e7229755041c693f0894db03018b8"
+    }
+  ],
+  "Dependencies": [],
+  "NodeLibraryDependencies": [],
+  "Bindings": [],
+  "View": {
+    "Dynamo": {
+      "ScaleFactor": 1.0,
+      "HasRunWithoutCrash": false,
+      "IsVisibleInDynamoLibrary": true,
+      "Version": "2.5.0.7460",
+      "RunType": "Manual",
+      "RunPeriod": "1000"
+    },
+    "Camera": {
+      "Name": "背景プレビュー",
+      "EyeX": -17.0,
+      "EyeY": 24.0,
+      "EyeZ": 50.0,
+      "LookX": 12.0,
+      "LookY": -13.0,
+      "LookZ": -58.0,
+      "UpX": 0.0,
+      "UpY": 1.0,
+      "UpZ": 0.0
+    },
+    "NodeViews": [
+      {
+        "ShowGeometry": true,
+        "Name": "CreateExtrusionsByLinesBottomsTops.py",
+        "Id": "ef44a556f6ed410782016d97b1897142",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 828.0,
+        "Y": 432.75
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "閉曲線集合配列",
+        "Id": "4df923df13c74351acdfd5370707a007",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 477.0,
+        "Y": 346.75
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "下部配列",
+        "Id": "527028704a5f4ba8bd3e2de6020f5866",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 477.0,
+        "Y": 429.75
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "上部配列",
+        "Id": "6e8856cf39c64675862c98f34f75d72d",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 477.0,
+        "Y": 513.75
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "方向",
+        "Id": "aa413dc3f30c45669e29ca04bd23cc6b",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 477.0,
+        "Y": 596.75
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Output",
+        "Id": "3ab5199518ae40ce8d43f9353d74ebc8",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 1175.5,
+        "Y": 430.75
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Code Block",
+        "Id": "f159f93ba70c4d6dbadbec73f8332113",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 107.0,
+        "Y": 347.0
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Code Block",
+        "Id": "239a693c8297473097b01586caf564dd",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 296.5,
+        "Y": 422.5
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Code Block",
+        "Id": "16edeaec63544fc8a6ead2d92c50232a",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 286.0,
+        "Y": 506.5
+      },
+      {
+        "ShowGeometry": true,
+        "Name": "Code Block",
+        "Id": "f198730932b04078b4e71b6608451d81",
+        "IsSetAsInput": false,
+        "IsSetAsOutput": false,
+        "Excluded": false,
+        "X": 187.5,
+        "Y": 599.0
+      }
+    ],
+    "Annotations": [],
+    "X": 459.58016966529306,
+    "Y": 101.03765643803308,
+    "Zoom": 0.62740812659763479
+  }
+}
